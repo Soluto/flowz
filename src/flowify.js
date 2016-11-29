@@ -1,7 +1,8 @@
+//@flow
 import type {FlowCall} from './types';
 import md5 from 'md5';
 
-export default function flowify(flowComponent): FlowCall {
+export default function flowify(flowComponent: Function): () => FlowCall {
     if (flowComponent.constructor.name === "Function") {
         return function() {
             return {
