@@ -1,11 +1,10 @@
 //@flow
-import type {FlowDescription} from './types';
+import type {Flow} from './types';
 
-export default (flowDescription: FlowDescription, executions: {[key:string]: Generator<*,void,*>}) => {
-    if (flowDescription == null) return null;
+export default (flow: Flow, executions: {[key:string]: Generator<*,void,*>}) => {
     return {
-        name: flowDescription.name,
-        execution: executions[flowDescription.name],
-        steps: flowDescription.steps || [],
+        name: flow.name,
+        execution: executions[flow.name],
+        cachedSteps: flow.cachedSteps || [],
     };
 }

@@ -1,42 +1,50 @@
 //@flow
-import type {Flow, CommitFlow, CompleteFlow, Observer} from './types';
+import type {Flow, FlowMessage, FlowAbort, CommitFlow, CompleteFlow, Observer} from './types';
 
 export default function(flow: Flow, commitFlow?: CommitFlow, completeFlow?: CompleteFlow) {
-    return function(observer: Observer<*>) {
+    return function(observer: Observer) {
         let aborted = false;
         (async function() {
+            if (!flow.execution) return;
+
             let generator = flow.execution();
             let {done, value} = generator.next();
+            let nextGeneratorValue;
+
             for (let i=0; !done; i++) {
-                let result;
                 if (value && value.type === "flowCall") {
-                    let executedStep = flow.steps[i];
-                    if (executedStep && executedStep.type === "flowCall") {
-                        result = executedStep.result;
+                    let cachedStep = flow.cachedSteps[i];
+                    if (cachedStep && cachedStep.type === "flowCall") {
+                        nextGeneratorValue = cachedStep.result;
                     }
                     else {
-                        result = value.func.apply(null, value.args);
-                        if (result && result.then) {
-                            result = await result;
+                        nextGeneratorValue = value.func.apply(null, value.args);
+                        if (nextGeneratorValue && nextGeneratorValue.then) {
+                            nextGeneratorValue = await nextGeneratorValue;
                         }
-                        if (aborted) return;
-                        flow.steps[i] = {...value, result};
+                        flow.cachedSteps[i] = {type: "flowCall", ...value, result: nextGeneratorValue};
+                        if (aborted) {
+                          const flowAbort: FlowAbort = {type: "flowAbort", aborted: true}
+                          flow.cachedSteps[i+1] = flowAbort;
+                          observer.onNext(flowAbort);
+                          if (commitFlow) commitFlow(flow);
+                          return;
+                        }
                         if (commitFlow) commitFlow(flow);
                     }
                 }
                 else {
-                    flow.steps[i] = {type: "message", message: value};
-                    observer.onNext(value);
+                    const flowMessage: FlowMessage = {type: "flowMessage", payload: value};
+                    flow.cachedSteps[i] = flowMessage;
+                    observer.onNext(flowMessage);
                 }
-                let next = generator.next(result);
+
+                let next = generator.next(nextGeneratorValue);
                 done = next.done;
                 value = next.value;
             }
         })()
         .then(()=> {
-            if (aborted) {
-                observer.onNext({type: "message", message: "aborted"})
-            }
             if (completeFlow) completeFlow(flow);
             observer.onCompleted()
         })

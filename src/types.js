@@ -1,38 +1,41 @@
 //@flow
+export type Flow = {
+    name: string,
+    cachedSteps: FlowStep[],
+    execution?: () => Generator<FlowCall,*,*>
+}
+
+export type FlowStep = FlowMessage | FlowCall | FlowAbort
+
+export type FlowMessage = {
+    type: "flowMessage",
+    payload: *
+}
+
 export type FlowCall = {
     type: "flowCall",
     name: string,
     id: string,
     args: Array<mixed>,
-    func: Function
+    func: Function,
+    result:? *
 }
 
-export type FlowDescription = {
-    name: string,
-    steps: Array<FlowStep>
+export type FlowAbort = {
+    type: "flowAbort",
+    aborted: boolean
 }
 
-export type FlowMessage = {
-    type: "message",
-    message: *
-}
-
-export type FlowCallResult = FlowCall & {result: mixed}
-
-export type FlowStep = FlowMessage | FlowCallResult
-
-export type Flow = {
-    name: string,
-    steps: FlowStep[],
-    execution: () => Generator<FlowCall,*,*>
+export type FlowError = {
+    type: "flowError"
 }
 
 export type CommitFlow = (flow: Flow) => mixed;
 
 export type CompleteFlow = (flow: Flow) => mixed;
 
-export type Observer<T> = {
-    onNext: (value: T) => *,
-    onError: (error: any) => mixed,
+export type Observer = {
+    onNext: (item: FlowMessage | FlowAbort) => mixed,
+    onError: (error: FlowError) => mixed,
     onCompleted: () => mixed
 }
