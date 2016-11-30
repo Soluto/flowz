@@ -11,15 +11,15 @@ export default function(flow: Flow, commitFlow?: CommitFlow, completeFlow?: Comp
                 let result;
                 if (value && value.type === "flowCall") {
                     let executedStep = flow.steps[i];
-                    if (executedStep.type === "flowCall") {
+                    if (executedStep && executedStep.type === "flowCall") {
                         result = executedStep.result;
                     }
                     else {
                         result = value.func.apply(null, value.args);
                         if (result && result.then) {
                             result = await result;
-                            if (aborted) return;
                         }
+                        if (aborted) return;
                         flow.steps[i] = {...value, result};
                         if (commitFlow) commitFlow(flow);
                     }
@@ -34,9 +34,14 @@ export default function(flow: Flow, commitFlow?: CommitFlow, completeFlow?: Comp
             }
         })()
         .then(()=> {
+            if (aborted) {
+                observer.onNext({type: "message", message: "aborted"})
+            }
             if (completeFlow) completeFlow(flow);
             observer.onCompleted()
         })
         .catch(ex=> {});
+
+        return () => aborted = true;
     }
 }
