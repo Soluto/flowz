@@ -1,0 +1,81 @@
+//@flow
+import type {Flow, Observer, SaveFlow} from './types';
+
+//usage of static 'send' method for better client api'
+let _send = (item: mixed) => {};
+export const send = (item: mixed) => _send(item);
+
+export const call = require('./call').default;
+
+export function executeFlow(flow: Flow, save: SaveFlow = (flow) => {}) {
+    return function(observer: Observer) {
+        _send = observer.next;
+        let stopped = false;
+        (async function() {
+            flow = _guardFlow(flow);
+            let generator = flow.execution();
+            let i = 0;
+            let nextValue;
+            while (true) {
+                let {done, value} = generator.next(nextValue);
+                if (done) return;
+                value = _guardNextValue(value);
+
+                let cachedMethod = flow.cachedFlowCalls[i];
+                if (cachedMethod) {
+                    nextValue = cachedMethod.result;
+                }
+                else {
+                    nextValue = value.func.apply(null, value.args);
+                    if (_isPromise(nextValue)) {
+                        nextValue = await nextValue;
+                        _send = observer.next;
+                    }
+                    flow.cachedFlowCalls[i] = {...value, result: nextValue};
+
+                    const saveMethod = save(flow);
+                    if (_isPromise(saveMethod)) {
+                        await saveMethod;
+                    }
+
+                    if (stopped) return;
+                }
+                i++;
+            }
+        })()
+        .then(() => observer.complete())
+        .catch(error => observer.error(error))
+
+        return () => {
+            stopped = true;
+            return flow;
+        }
+    }
+}
+
+function _isPromise(obj) {
+    return obj && obj.then;
+}
+
+function _guardFlow(flow) {
+    if (!flow)
+        throw new Error("flow cannot be null");
+
+    if (!flow.name)
+        throw new Error("flow must have a name");
+
+    if (!flow.execution)
+        throw new Error("flow generator cannot be null");
+
+    return flow;
+}
+
+function _guardNextValue(value) {
+    if (!value)
+        throw new Error("generator yielded null value. Notice to yieled values must function wrap with 'call' method.");
+
+    if (value.type != "call")
+        throw new Error("generator yield value type different than 'call'. type was: " + value.type + ". Did you wrap your function with 'call' method?");
+
+    return value;
+}
