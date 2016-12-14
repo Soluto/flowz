@@ -9,13 +9,20 @@ export const call = require('./call').default;
 
 export function executeFlow(flow: Flow, save: SaveFlow = (flow) => {}) {
     return function(observer: Observer) {
+        try {
+            flow = _guardFlow(flow);
+        }
+        catch (e) {
+            observer.error(e);
+            return;
+        }
+
         _send = observer.next;
         let stopped = false;
+        let generator = flow.execution();
+        let i = 0;
+        let nextValue;
         (async function() {
-            flow = _guardFlow(flow);
-            let generator = flow.execution();
-            let i = 0;
-            let nextValue;
             while (true) {
                 let {done, value} = generator.next(nextValue);
                 if (done) return;
@@ -26,11 +33,17 @@ export function executeFlow(flow: Flow, save: SaveFlow = (flow) => {}) {
                     nextValue = cachedMethod.result;
                 }
                 else {
-                    nextValue = value.func.apply(null, value.args);
-                    if (_isPromise(nextValue)) {
-                        nextValue = await nextValue;
-                        _send = observer.next;
+                    try {
+                        nextValue = value.func.apply(null, value.args);
+                        if (_isPromise(nextValue)) {
+                            nextValue = await nextValue;
+                            _send = observer.next;
+                        }
                     }
+                    catch (e) {
+                        generator.throw(e);
+                    }
+
                     flow.cachedFlowCalls[i] = {...value, result: nextValue};
 
                     const saveMethod = save(flow);
@@ -44,10 +57,11 @@ export function executeFlow(flow: Flow, save: SaveFlow = (flow) => {}) {
             }
         })()
         .then(() => observer.complete())
-        .catch(error => observer.error(error))
+        .catch(error => observer.error(error));
 
         return () => {
             stopped = true;
+            ///todo: return object
             return flow;
         }
     }

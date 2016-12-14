@@ -111,52 +111,137 @@ test("should execute flow with cached steps", (done) => {
 
 test("should execute a flow with inner generator", (done) => {
     const observer = createObserver({next: (item) => {
-        expect(item.result).toBe(5)
+        expect(item.result).toBe(5);
         done();
-    }})
+    }});
 
     const innerGenerator = function*(param) {
         const result = yield call(() =>  param + 4)();
         send({result});
-    }
+    };
 
     const flow = createFlow(function*() {
-        const result = yield call(() => 1)()
+        const result = yield call(() => 1)();
         yield* innerGenerator(result);
     });
 
     executeFlow(flow)(observer);
 });
 
-test("should execute two flows parallely", (done) => {
-    const results = [];
+test("should catch thrown errors in flow execution", async () => {
+    let observer;
+    const assertion = new Promise((resolve) => {
+        observer = createObserver({next: (item) => {
+            resolve(item)
+        }});
+    });
 
+    const flow = createFlow(function*() {
+        try {
+            yield call(() => {throw "some error"})();
+        }
+        catch (e) {
+            expect(e).toBe("some error");
+        }
+        send({result: "expected"});
+    });
+
+    executeFlow(flow)(observer);
+    expect(((await assertion).result)).toBe("expected");
+});
+
+test("should catch Promise rejects in flow execution", async () => {
+    let observer;
+    const assertion = new Promise((resolve) => {
+        observer = createObserver({next: (item) => {
+            resolve(item)
+        }});
+    });
+
+    const flow = createFlow(function*() {
+        try {
+            yield call(() => Promise.reject("some error"))();
+        }
+        catch (e) {
+            expect(e).toBe("some error");
+        }
+        send({result: "expected"});
+    });
+
+    executeFlow(flow)(observer);
+    expect(((await assertion).result)).toBe("expected");
+});
+
+test("should notify on error when Promise is rejected from flow 'call'", async () => {
+    let observer;
+    const result = new Promise((resolve) => {
+        observer = createObserver({error: (e) => resolve(e)});
+    });
+
+    const flow = createFlow(function*() {
+        yield call(() => Promise.reject(new Error("some error")))();
+    });
+
+    executeFlow(flow)(observer);
+    expect((await result).message).toBe("some error");
+});
+
+test("should notify on error when uncaught error is thrown from flow 'call'", async () => {
+    let observer;
+    const result = new Promise((resolve) => {
+        observer = createObserver({error: (e) => resolve(e)});
+    });
+
+    const flow = createFlow(function*() {
+        yield call(() => {throw new Error("some error")})();
+    });
+
+    executeFlow(flow)(observer);
+    expect((await result).message).toBe("some error");
+});
+
+test("should execute two flows parallely", async () => {
     const flow1 = createFlow(function*() {
         send({result: "exepcted1"});
         yield call(() => wait(10))();
         send({result: "exepcted3"});
     });
-    const observer1 = createObserver({
-        next: (item) => {
-          results.push(item.result);
-        },
-        complete: () => {
-            expect(results[0]).toBe("exepcted1");
-            expect(results[1]).toBe("exepcted2");
-            expect(results[2]).toBe("exepcted3");
-            done();
-        }
+    let observer1;
+    let results1 = new Promise((resolve, reject) => {
+        let results = [];
+        observer1 = createObserver({
+            next: (item) => {
+                results.push(item.result);
+            },
+            complete: () => {
+                resolve(results);
+            }
+        });
     });
 
     const flow2 = createFlow(function*() {
         send({result: "exepcted2"});
     });
-    const observer2 = createObserver({next: (item) => {
-        results.push(item.result);
-    }});
+
+    let observer2;
+    const results2 = new Promise((resolve, reject) => {
+        const results = [];
+        observer2 = createObserver({
+            next: (item) => {
+                results.push(item.result);
+            },
+            complete: () => {
+                resolve(results);
+            }
+        })
+    });
 
     executeFlow(flow1)(observer1);
     executeFlow(flow2)(observer2);
+
+
+    expect(await results1).toEqual(["exepcted1", "exepcted3"]);
+    expect(await results2).toEqual(["exepcted2"])
 });
 
 test("should save flow synchronously", (done) => {
@@ -197,8 +282,8 @@ test("should save flow asynchronously", (done) => {
   executeFlow(flow, save)(observer)
 });
 
-test("should stop flow excution", async () => {
-    const observer = createObserver()
+test("should stop flow execution", async () => {
+    const observer = createObserver();
 
     const flow = createFlow(function*() {
         yield call(() => 1)();
@@ -211,8 +296,8 @@ test("should stop flow excution", async () => {
     expect(flowUntilStopped.cachedFlowCalls.map(c => c.result)).toEqual([1,2,3]);
 });
 
-test("should stop flow excution when save is asynchronous", async () => {
-    const observer = createObserver()
+test("should stop flow execution when save is asynchronous", async () => {
+    const observer = createObserver();
 
     const flow = createFlow(function*() {
         yield call(() => 1)();
@@ -221,16 +306,29 @@ test("should stop flow excution when save is asynchronous", async () => {
     });
 
     const stopFlowExecution = executeFlow(flow, () => Promise.resolve())(observer);
-    await wait(100)
     const flowUntilStopped = stopFlowExecution();
-    expect(flowUntilStopped.cachedFlowCalls.map(c => c.result)).toEqual([1,2,3]);
+    expect(flowUntilStopped.cachedFlowCalls.map(c => c.result)).toEqual([1]);
+});
+
+test("should stop flow execution when yielding asynchronous call", async () => {
+    const observer = createObserver();
+
+    const flow = createFlow(function*() {
+        yield call(() => 1)();
+        yield call(() => Promise.resolve())();
+        yield call(() => 3)();
+    });
+
+    const stopFlowExecution = executeFlow(flow)(observer);
+    const flowUntilStopped = stopFlowExecution();
+    expect(flowUntilStopped.cachedFlowCalls.map(c => c.result)).toEqual([1]);
 });
 
 test("should notify about error when yielding object with wrong type", (done) => {
     const observer = createObserver({error: (item) => {
         expect(item.message).toBe("generator yield value type different than 'call'. type was: wrong. Did you wrap your function with 'call' method?")
         done();
-    }})
+    }});
 
     const flow = createFlow(function*() {
         yield {type: "wrong"};
@@ -243,7 +341,7 @@ test("should notify about error when yielding object that has no type", (done) =
     const observer = createObserver({error: (item) => {
         expect(item.message).toBe("generator yield value type different than 'call'. type was: undefined. Did you wrap your function with 'call' method?");
         done();
-    }})
+    }});
 
     const flow = createFlow(function*() {
         yield "stam"
@@ -265,12 +363,16 @@ test("should notify about error when yielding null", (done) => {
     executeFlow(flow)(observer)
 });
 
-test('should notify about error when flow is null', (done) => {
-    const observer = createObserver({error: () => done()})
+test('should notify about error when flow is null', async () => {
+    let observer;
+    const success = new Promise((resolve, reject) => {
+        observer = createObserver({error: () => resolve(true)});
+    });
 
     const flow = createFlow(null);
 
     executeFlow(flow)(observer)
+    expect(await success).toBe(true);
 });
 
 test('should notify about error when no flow generator is null', (done) => {
@@ -288,9 +390,6 @@ test('should notify about error when flow has no name', (done) => {
 
     executeFlow(flow)(observer)
 });
-
-
-
 
 
 function wait(duration) {
