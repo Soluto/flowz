@@ -1,19 +1,30 @@
 import {executeFlow, send, call} from '../index';
 
-test('should execute empty flow', (done) => {
+test('should complete flow', (done) => {
     const observer = createObserver({complete: () => done()})
     const flow = createFlow(function*() { })
     executeFlow(flow)(observer)
 });
 
-test('should output objects from flow by calling "send" method', (done) => {
-    const observer = createObserver({complete: () => done()})
+test('should output from flow by calling "send" method', async () => {
+    let observer;
+    const assertion = new Promise((resolve) => {
+        const result = [];
+        observer = createObserver({
+            next: (item) => {
+                result.push(item);
+            },
+            complete: () => resolve(result)
+        });
+    });
 
     const flow = createFlow(function*() {
         send({foo: 1});
+        send("some output");
     })
 
     executeFlow(flow)(observer)
+    expect((await assertion)).toEqual([{foo: 1}, "some output"]);
 });
 
 test("should executes flow 'call' without params", (done) => {
@@ -65,7 +76,7 @@ test("should executes flow 'call' with closure params", (done) => {
     executeFlow(flow)(observer)
 });
 
-test("should executes flow 'call' that run async method", (done) => {
+test("should executes async flow 'call'", (done) => {
     const observer = createObserver({next: (item) => {
         expect(item.result).toBe(5)
         done();
@@ -291,23 +302,9 @@ test("should stop flow execution", async () => {
         yield call(() => 3)();
     });
 
-    const stopFlowExecution = executeFlow(flow)(observer);
-    const flowUntilStopped = stopFlowExecution();
-    expect(flowUntilStopped.cachedFlowCalls.map(c => c.result)).toEqual([1,2,3]);
-});
-
-test("should stop flow execution when save is asynchronous", async () => {
-    const observer = createObserver();
-
-    const flow = createFlow(function*() {
-        yield call(() => 1)();
-        yield call(() => 2)();
-        yield call(() => 3)();
-    });
-
-    const stopFlowExecution = executeFlow(flow, () => Promise.resolve())(observer);
-    const flowUntilStopped = stopFlowExecution();
-    expect(flowUntilStopped.cachedFlowCalls.map(c => c.result)).toEqual([1]);
+    const flowInProgress = executeFlow(flow)(observer);
+    flowInProgress.dispose();
+    expect(flowInProgress.cachedFlowCalls.map(c => c.result)).toEqual([1,2,3]);
 });
 
 test("should stop flow execution when yielding asynchronous call", async () => {
@@ -319,12 +316,26 @@ test("should stop flow execution when yielding asynchronous call", async () => {
         yield call(() => 3)();
     });
 
-    const stopFlowExecution = executeFlow(flow)(observer);
-    const flowUntilStopped = stopFlowExecution();
-    expect(flowUntilStopped.cachedFlowCalls.map(c => c.result)).toEqual([1]);
+    const flowInProgress = executeFlow(flow)(observer);
+    flowInProgress.dispose();
+    expect(flowInProgress.cachedFlowCalls.map(c => c.result)).toEqual([1]);
 });
 
-test("should notify about error when yielding object with wrong type", (done) => {
+test("should stop flow execution when save is asynchronous", async () => {
+    const observer = createObserver();
+
+    const flow = createFlow(function*() {
+        yield call(() => 1)();
+        yield call(() => 2)();
+        yield call(() => 3)();
+    });
+
+    const flowInProgress = executeFlow(flow, () => Promise.resolve())(observer);
+    flowInProgress.dispose();
+    expect(flowInProgress.cachedFlowCalls.map(c => c.result)).toEqual([1]);
+});
+
+test("should guard against yielding object with wrong type", (done) => {
     const observer = createObserver({error: (item) => {
         expect(item.message).toBe("generator yield value type different than 'call'. type was: wrong. Did you wrap your function with 'call' method?")
         done();
@@ -337,7 +348,7 @@ test("should notify about error when yielding object with wrong type", (done) =>
     executeFlow(flow)(observer)
 });
 
-test("should notify about error when yielding object that has no type", (done) => {
+test("should guard against yielding object that has no type", (done) => {
     const observer = createObserver({error: (item) => {
         expect(item.message).toBe("generator yield value type different than 'call'. type was: undefined. Did you wrap your function with 'call' method?");
         done();
@@ -350,7 +361,7 @@ test("should notify about error when yielding object that has no type", (done) =
     executeFlow(flow)(observer)
 });
 
-test("should notify about error when yielding null", (done) => {
+test("should guard against yielding null", (done) => {
     const observer = createObserver({error: (item) => {
         expect(item.message).toBe("generator yielded null value. Notice to yieled values must function wrap with 'call' method.")
         done();
@@ -363,7 +374,7 @@ test("should notify about error when yielding null", (done) => {
     executeFlow(flow)(observer)
 });
 
-test('should notify about error when flow is null', async () => {
+test('should guard against null flow', async () => {
     let observer;
     const success = new Promise((resolve, reject) => {
         observer = createObserver({error: () => resolve(true)});
@@ -375,7 +386,7 @@ test('should notify about error when flow is null', async () => {
     expect(await success).toBe(true);
 });
 
-test('should notify about error when no flow generator is null', (done) => {
+test('should guard against flow without generator', (done) => {
     const observer = createObserver({error: () => done()})
 
     const flow = createFlow(null);
@@ -383,7 +394,7 @@ test('should notify about error when no flow generator is null', (done) => {
     executeFlow(flow)(observer)
 });
 
-test('should notify about error when flow has no name', (done) => {
+test('should guard against flow without a name', (done) => {
     const observer = createObserver({error: () => done()})
 
     const flow = createFlow(null);

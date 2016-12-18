@@ -59,10 +59,9 @@ export function executeFlow(flow: Flow, save: SaveFlow = (flow) => {}) {
         .then(() => observer.complete())
         .catch(error => observer.error(error));
 
-        return () => {
-            stopped = true;
-            ///todo: return object
-            return flow;
+        return {
+            ...flow,
+            dispose: () => {stopped = true;}
         }
     }
 }
