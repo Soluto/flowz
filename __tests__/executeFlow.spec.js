@@ -235,7 +235,7 @@ test("should execute two flows parallely", async () => {
     });
 
     let observer2;
-    const results2 = new Promise((resolve, reject) => {
+    const results2 = new Promise((resolve) => {
         const results = [];
         observer2 = createObserver({
             next: (item) => {
@@ -376,7 +376,7 @@ test("should guard against yielding null", (done) => {
 
 test('should guard against null flow', async () => {
     let observer;
-    const success = new Promise((resolve, reject) => {
+    const success = new Promise((resolve) => {
         observer = createObserver({error: () => resolve(true)});
     });
 
@@ -402,9 +402,22 @@ test('should guard against flow without a name', (done) => {
     executeFlow(flow)(observer)
 });
 
+test("should execute flow with function dependency wrap with 'call", (done) => {
+    const observer = createObserver();
+
+    const dependency = (value) => value;
+    const flow = createFlow(function*(dependency) {
+        const result = yield dependency(1);
+        expect(result).toBe(1)
+        done()
+    }, null, [dependency]);
+
+    executeFlow(flow)(observer)
+});
+
 
 function wait(duration) {
-    return new Promise(function(resolve, reject){
+    return new Promise(function(resolve){
       setTimeout(function(){
         resolve();
       }, duration)
@@ -415,14 +428,15 @@ function createObserver(observer = {}) {
     return {
         next: observer.next || ((item) => {}),
         complete: observer.complete || (() => {}),
-        error: observer.error || ((error) => {console.log("error was thrown - " + error.message)})
+        error: observer.error || ((error) => console.log("error was thrown - " + error.message))
     }
 }
 
-function createFlow(flowExecution, cachedFlowCalls) {
+function createFlow(flowExecution, cachedFlowCalls, dependencies) {
     return {
         name: "testFlow",
-        cachedFlowCalls: cachedFlowCalls || [],
-        execution: flowExecution
+        cachedFlowCalls: cachedFlowCalls,
+        execution: flowExecution,
+        dependencies
     }
 }

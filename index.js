@@ -11,6 +11,7 @@ export function executeFlow(flow: Flow, save: SaveFlow = (flow) => {}) {
     return function(observer: Observer) {
         try {
             flow = _guardFlow(flow);
+            flow.dependencies = flow.dependencies? flow.dependencies.map(d => call(d)) : [];
         }
         catch (e) {
             observer.error(e);
@@ -19,7 +20,7 @@ export function executeFlow(flow: Flow, save: SaveFlow = (flow) => {}) {
 
         _send = observer.next;
         let stopped = false;
-        let generator = flow.execution();
+        let generator = flow.execution(...flow.dependencies);
         let i = 0;
         let nextValue;
         (async function() {
@@ -27,6 +28,7 @@ export function executeFlow(flow: Flow, save: SaveFlow = (flow) => {}) {
                 let {done, value} = generator.next(nextValue);
                 if (done) return;
                 value = _guardNextValue(value);
+
 
                 let cachedMethod = flow.cachedFlowCalls[i];
                 if (cachedMethod) {
@@ -79,6 +81,9 @@ function _guardFlow(flow) {
 
     if (!flow.execution)
         throw new Error("flow generator cannot be null");
+
+    if (!flow.cachedFlowCalls)
+        flow.cachedFlowCalls = [];
 
     return flow;
 }
