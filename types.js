@@ -3,7 +3,7 @@ export type Flow = {
     name: string,
     cachedFlowCalls: Array<?FlowCall>,
     execution: () => Generator<FlowCall,*,*>,
-    dependencies: ?Array<Function>
+    dependencies: *,
     dispose: ?Function
 }
 

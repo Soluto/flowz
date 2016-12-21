@@ -11,7 +11,11 @@ export function executeFlow(flow: Flow, save: SaveFlow = (flow) => {}) {
     return function(observer: Observer) {
         try {
             flow = _guardFlow(flow);
-            flow.dependencies = flow.dependencies? flow.dependencies.map(d => call(d)) : [];
+            Object.keys(flow.dependencies).forEach(k => {
+                if (_isFunction(flow.dependencies[k])) {
+                    flow.dependencies[k] = call(flow.dependencies[k])
+                }
+            });
         }
         catch (e) {
             observer.error(e);
@@ -20,7 +24,7 @@ export function executeFlow(flow: Flow, save: SaveFlow = (flow) => {}) {
 
         _send = observer.next;
         let stopped = false;
-        let generator = flow.execution(...flow.dependencies);
+        let generator = flow.execution(flow.dependencies);
         let i = 0;
         let nextValue;
         (async function() {
@@ -85,6 +89,10 @@ function _guardFlow(flow) {
     if (!flow.cachedFlowCalls)
         flow.cachedFlowCalls = [];
 
+    if (!flow.dependencies)
+        flow.dependencies = {};
+
+
     return flow;
 }
 
@@ -97,3 +105,7 @@ function _guardNextValue(value) {
 
     return value;
 }
+
+const _isFunction = function(obj) {
+    return !!(obj && obj.constructor && obj.call && obj.apply);
+};
