@@ -1,5 +1,5 @@
-import {executeFlow} from '../index';
-import {createObserver, createFlow} from './utils';
+import {executeFlow} from '../../index';
+import {createObserver, createFlow} from '../utils';
 
 test("should guard against yielding object with wrong type", (done) => {
     const observer = createObserver({error: (item) => {

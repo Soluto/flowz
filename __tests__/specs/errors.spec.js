@@ -1,5 +1,5 @@
-import {executeFlow, send, call} from '../index';
-import {createObserver, createFlow} from './utils';
+import {executeFlow, send, call} from '../../index';
+import {createObserver, createFlow} from '../utils';
 
 test("should catch thrown errors in flow execution", async () => {
     let observer;

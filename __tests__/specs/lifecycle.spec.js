@@ -1,5 +1,5 @@
-import {executeFlow, call} from '../index';
-import {createObserver, createFlow, wait} from './utils';
+import {executeFlow, call} from '../../index';
+import {createObserver, createFlow, wait} from '../utils';
 
 test("should save flow synchronously", (done) => {
     let results = [];

@@ -1,5 +1,5 @@
-import {executeFlow, send, call} from '../index';
-import {createObserver, createFlow, wait} from './utils';
+import {executeFlow, send, call} from '../../index';
+import {createObserver, createFlow, wait} from '../utils';
 
 test('should complete flow', (done) => {
     const observer = createObserver({complete: () => done()})
