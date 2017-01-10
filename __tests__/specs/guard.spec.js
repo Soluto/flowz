@@ -1,4 +1,4 @@
-import {executeFlow} from '../../index';
+import {executeFlow} from '../../src/index';
 import {createObserver, createFlow} from '../utils';
 
 test("should guard against yielding object with wrong type", (done) => {

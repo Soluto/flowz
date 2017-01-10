@@ -17,6 +17,8 @@ export type FlowCall = {
 
 export type SaveFlow = (flow: Flow) => (void | Promise<void>);
 
+export type CompleteFlow = (flow: Flow) => (void | Promise<void>);
+
 export type Observer = {
     next: (item: *) => void,
     error: (error: Error) => void,

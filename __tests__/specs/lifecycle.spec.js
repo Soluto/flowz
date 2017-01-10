@@ -1,4 +1,4 @@
-import {executeFlow, call} from '../../index';
+import {executeFlow, call} from '../../src/index';
 import {createObserver, createFlow, wait} from '../utils';
 
 test("should save flow synchronously", (done) => {

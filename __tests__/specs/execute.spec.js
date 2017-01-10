@@ -1,4 +1,4 @@
-import {executeFlow, send, call} from '../../index';
+import {executeFlow, send, call} from '../../src/index';
 import {createObserver, createFlow, wait} from '../utils';
 
 test('should complete flow', (done) => {
@@ -72,6 +72,34 @@ test("should executes flow 'call' with closure params", (done) => {
         const a = 4;
         const result = yield call(() => a + 1)();
         send({result});
+    });
+
+    executeFlow(flow)(observer)
+});
+
+test("should wrap object functions with 'call'", (done) => {
+    const observer = createObserver({
+        next: (item) => {
+            expect(item.result1).toBe(5)
+            expect(item.result2).toBe(6)
+            done();
+        }
+    })
+
+    const flow = createFlow(function*() {
+        let obj = {
+            prop: "some string",
+            func1: (a) => a + 1,
+            func2: (a) => a + 2
+        }
+        obj = call.wrap(obj);
+        console.log(obj.prop)
+        //expect(obj.prop).to.equal("some string");
+
+        const a = 4;
+        const result1 = yield obj.func1(a)
+        const result2 = yield obj.func2(a)
+        send({result1, result2});
     });
 
     executeFlow(flow)(observer)

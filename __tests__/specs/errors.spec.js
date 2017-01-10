@@ -1,4 +1,4 @@
-import {executeFlow, send, call} from '../../index';
+import {executeFlow, send, call} from '../../src/index';
 import {createObserver, createFlow} from '../utils';
 
 test("should catch thrown errors in flow execution", async () => {
