@@ -50,7 +50,7 @@ export function executeFlow(flow: Flow, save: SaveFlow = (flow) => {}) {
                         generator.throw(e);
                     }
 
-                    flow.cachedFlowCalls[i] = {...value, result: nextValue};
+                    flow.cachedFlowCalls[i] = {type: value.type, result: nextValue};
 
                     const saveMethod = save(flow);
                     if (_isPromise(saveMethod)) {
