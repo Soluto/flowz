@@ -93,8 +93,7 @@ test("should wrap object functions with 'call'", (done) => {
             func2: (a) => a + 2
         }
         obj = call.wrap(obj);
-        console.log(obj.prop)
-        //expect(obj.prop).to.equal("some string");
+        expect(obj.prop).toBe("some string");
 
         const a = 4;
         const result1 = yield obj.func1(a)

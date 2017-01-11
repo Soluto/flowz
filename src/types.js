@@ -9,9 +9,9 @@ export type Flow = {
 
 export type FlowCall = {
     type: "call",
-    version: string,
-    args: Array<mixed>,
-    func: Function,
+    version?: string,
+    args?: Array<mixed>,
+    func?: Function,
     result?: *
 }
 

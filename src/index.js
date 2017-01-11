@@ -1,5 +1,5 @@
 //@flow
-import type {Flow, Observer, SaveFlow} from './types';
+import type {Flow, Observer, SaveFlow, CompleteFlow} from './types';
 
 //usage of static 'send' method for better client api'
 let _send = (item: mixed) => {};
@@ -7,7 +7,7 @@ export const send = (item: mixed) => _send(item);
 
 export const call = require('./call').default;
 
-export function executeFlow(flow: Flow, save: SaveFlow = (flow) => {}) {
+export function executeFlow(flow: Flow, save?: SaveFlow, complete?: CompleteFlow) {
     return function(observer: Observer) {
         try {
             flow = _guardFlow(flow);
@@ -33,7 +33,6 @@ export function executeFlow(flow: Flow, save: SaveFlow = (flow) => {}) {
                 if (done) return;
                 value = _guardNextValue(value);
 
-
                 let cachedMethod = flow.cachedFlowCalls[i];
                 if (cachedMethod) {
                     nextValue = cachedMethod.result;
@@ -52,17 +51,26 @@ export function executeFlow(flow: Flow, save: SaveFlow = (flow) => {}) {
 
                     flow.cachedFlowCalls[i] = {type: value.type, result: nextValue};
 
-                    const saveMethod = save(flow);
-                    if (_isPromise(saveMethod)) {
-                        await saveMethod;
+                    if (save) {
+                        const saveMethod = save(flow);
+                        if (_isPromise(saveMethod)) {
+                            await saveMethod;
+                        }
+                        if (stopped) return;
                     }
-
-                    if (stopped) return;
                 }
                 i++;
             }
         })()
-        .then(() => observer.complete())
+        .then(async () => {
+            if (complete) {
+                const completeMethod = complete(flow);
+                if (_isPromise(completeMethod)) {
+                    await completeMethod;
+                }
+            }
+            observer.complete()
+        })
         .catch(error => observer.error(error));
 
         return {

@@ -39,6 +39,29 @@ test("should save flow asynchronously", (done) => {
     executeFlow(flow, save)(observer)
 });
 
+test("should complete flow synchronously", (done) => {
+    const observer = createObserver();
+    const flow = createFlow(function*() {});
+
+    const complete = (flow) => {
+        done();
+    };
+
+    executeFlow(flow, null, complete)(observer)
+});
+
+test("should complete flow asynchronously", (done) => {
+    const observer = createObserver();
+    const flow = createFlow(function*() {});
+
+    const complete = async (flow) => {
+        await wait(100);
+        done();
+    };
+
+    executeFlow(flow, null, complete)(observer)
+});
+
 test("should stop flow execution", async () => {
     const observer = createObserver();
 

@@ -33,10 +33,10 @@ var send = exports.send = function send(item) {
 
 var call = exports.call = require('./call').default;
 
-function executeFlow(flow) {
-    var save = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : function (flow) {};
-
+function executeFlow(flow, save, complete) {
     return function (observer) {
+        var _this = this;
+
         try {
             flow = _guardFlow(flow);
             (0, _keys2.default)(flow.dependencies).forEach(function (k) {
@@ -62,7 +62,7 @@ function executeFlow(flow) {
                     switch (_context.prev = _context.next) {
                         case 0:
                             if (!true) {
-                                _context.next = 32;
+                                _context.next = 33;
                                 break;
                             }
 
@@ -86,7 +86,7 @@ function executeFlow(flow) {
                             }
 
                             nextValue = cachedMethod.result;
-                            _context.next = 29;
+                            _context.next = 30;
                             break;
 
                         case 10:
@@ -121,38 +121,71 @@ function executeFlow(flow) {
 
                             flow.cachedFlowCalls[i] = { type: value.type, result: nextValue };
 
-                            saveMethod = save(flow);
-
-                            if (!_isPromise(saveMethod)) {
-                                _context.next = 27;
+                            if (!save) {
+                                _context.next = 30;
                                 break;
                             }
 
-                            _context.next = 27;
+                            saveMethod = save(flow);
+
+                            if (!_isPromise(saveMethod)) {
+                                _context.next = 28;
+                                break;
+                            }
+
+                            _context.next = 28;
                             return saveMethod;
 
-                        case 27:
+                        case 28:
                             if (!stopped) {
-                                _context.next = 29;
+                                _context.next = 30;
                                 break;
                             }
 
                             return _context.abrupt('return');
 
-                        case 29:
+                        case 30:
                             i++;
                             _context.next = 0;
                             break;
 
-                        case 32:
+                        case 33:
                         case 'end':
                             return _context.stop();
                     }
                 }
             }, _callee, this, [[10, 19]]);
-        }))().then(function () {
-            return observer.complete();
-        }).catch(function (error) {
+        }))().then((0, _asyncToGenerator3.default)(_regenerator2.default.mark(function _callee2() {
+            var completeMethod;
+            return _regenerator2.default.wrap(function _callee2$(_context2) {
+                while (1) {
+                    switch (_context2.prev = _context2.next) {
+                        case 0:
+                            if (!complete) {
+                                _context2.next = 5;
+                                break;
+                            }
+
+                            completeMethod = complete(flow);
+
+                            if (!_isPromise(completeMethod)) {
+                                _context2.next = 5;
+                                break;
+                            }
+
+                            _context2.next = 5;
+                            return completeMethod;
+
+                        case 5:
+                            observer.complete();
+
+                        case 6:
+                        case 'end':
+                            return _context2.stop();
+                    }
+                }
+            }, _callee2, _this);
+        }))).catch(function (error) {
             return observer.error(error);
         });
 

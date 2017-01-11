@@ -72,3 +72,35 @@ test("should notify on error when uncaught error is thrown from flow 'call'", as
     executeFlow(flow)(observer);
     expect((await result).message).toBe("some error");
 });
+
+test("should notify on error when uncaught error is thrown from 'save'", async () => {
+    let observer;
+    const result = new Promise((resolve) => {
+        observer = createObserver({error: (e) => resolve(e)});
+    });
+
+    const flow = createFlow(function*() {
+        yield call(() => {})();
+    });
+
+    const save = () => {throw new Error("some error")};
+
+    executeFlow(flow, save)(observer);
+    expect((await result).message).toBe("some error");
+});
+
+test("should notify on error when uncaught error is thrown from 'complete'", async () => {
+    let observer;
+    const result = new Promise((resolve) => {
+        observer = createObserver({error: (e) => resolve(e)});
+    });
+
+    const flow = createFlow(function*() {
+        yield call(() => {})();
+    });
+
+    const complete = () => {throw new Error("some error")};
+
+    executeFlow(flow, null, complete)(observer);
+    expect((await result).message).toBe("some error");
+});
