@@ -1,4 +1,3 @@
-# flows
+# flowz
 
-## Tests
-install dependencies and execute `npm test`
+Comming Soon
