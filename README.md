@@ -1,3 +1,3 @@
 # flowz
 
-Comming Soon
+Documnetation is comming soon..
