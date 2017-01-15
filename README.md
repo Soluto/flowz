@@ -13,12 +13,11 @@ Comming soon
 
 ## Contributing
 Thanks for thinking about contributing! We are looking for contributions of any sort and size - features, bug fixes, documentation or anything else that you think will make shisell better.
-
-Fork and clone locally
-Create a topic specific branch
-Add a cool feature or fix a bug
-Add tests
-Send a Pull Request
+* Fork and clone locally
+* Create a topic specific branch
+* Add a cool feature or fix a bug
+* Add tests
+* Send a Pull Request
 
 #### Running Tests
 ```sh
