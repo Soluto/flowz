@@ -28,7 +28,8 @@ $ npm test
 
 ## Why the name Seffi?
 We give names to our open source projects according to our office dogs names. 
-Seffi is one of our favorite dogs so we deciced that it deserves an open source project.
+Seffi is one of our favorite dogs so we decided that it deserves an open source project.
+
 For more open sourced dogs, see:
 
 https://github.com/Soluto/shisell-js
