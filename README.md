@@ -6,7 +6,9 @@ seffi saves the state of the execution internally and when it is resumed it play
 For instance, if during an execution a call was made to an http server it will not run again when the execution is resumed - the result from the original call will be used.
 
 ## Install
-npm install seffi --save
+```sh
+$ npm install seffi --save
+```
 
 ## Usage
 Comming soon
@@ -22,3 +24,4 @@ Thanks for thinking about contributing! We are looking for contributions of any 
 #### Running Tests
 ```sh
 $ npm test
+```
