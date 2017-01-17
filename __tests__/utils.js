@@ -14,10 +14,10 @@ export function createObserver(observer = {}) {
     }
 }
 
-export function createFlow(flowExecution, cachedFlowCalls, dependencies) {
+export function createFlow(flowExecution, steps, dependencies) {
     return {
         name: "testFlow",
-        cachedFlowCalls: cachedFlowCalls,
+        steps: steps,
         execution: flowExecution,
         dependencies
     }

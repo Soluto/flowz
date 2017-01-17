@@ -14,7 +14,7 @@ test("should save flow synchronously", (done) => {
         yield call(() => "exepcted1")();
     });
 
-    const save = (flow) => {results = flow.cachedFlowCalls.map(m => m.result)};
+    const save = (flow) => {results = flow.steps.map(m => m.result)};
 
     executeFlow(flow, save)(observer)
 });
@@ -33,7 +33,7 @@ test("should save flow asynchronously", (done) => {
 
     const save = async (flow) => {
         await wait(100);
-        results = flow.cachedFlowCalls.map(m => m.result)
+        results = flow.steps.map(m => m.result)
     };
 
     executeFlow(flow, save)(observer)
@@ -73,7 +73,7 @@ test("should stop flow execution", async () => {
 
     const flowInProgress = executeFlow(flow)(observer);
     flowInProgress.dispose();
-    expect(flowInProgress.cachedFlowCalls.map(c => c.result)).toEqual([1,2,3]);
+    expect(flowInProgress.steps.map(c => c.result)).toEqual([1,2,3]);
 });
 
 test("should stop flow execution when yielding asynchronous call", async () => {
@@ -87,7 +87,7 @@ test("should stop flow execution when yielding asynchronous call", async () => {
 
     const flowInProgress = executeFlow(flow)(observer);
     flowInProgress.dispose();
-    expect(flowInProgress.cachedFlowCalls.map(c => c.result)).toEqual([1]);
+    expect(flowInProgress.steps.map(c => c.result)).toEqual([1]);
 });
 
 test("should stop flow execution when save is asynchronous", async () => {
@@ -101,5 +101,5 @@ test("should stop flow execution when save is asynchronous", async () => {
 
     const flowInProgress = executeFlow(flow, () => Promise.resolve())(observer);
     flowInProgress.dispose();
-    expect(flowInProgress.cachedFlowCalls.map(c => c.result)).toEqual([1]);
+    expect(flowInProgress.steps.map(c => c.result)).toEqual([1]);
 });

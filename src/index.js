@@ -33,7 +33,7 @@ export function executeFlow(flow: Flow, save?: SaveFlow, complete?: CompleteFlow
                 if (done) return;
                 value = _guardNextValue(value);
 
-                let cachedMethod = flow.cachedFlowCalls[i];
+                let cachedMethod = flow.steps[i];
                 if (cachedMethod) {
                     nextValue = cachedMethod.result;
                 }
@@ -49,7 +49,7 @@ export function executeFlow(flow: Flow, save?: SaveFlow, complete?: CompleteFlow
                         generator.throw(e);
                     }
 
-                    flow.cachedFlowCalls[i] = {type: value.type, result: nextValue};
+                    flow.steps[i] = {type: value.type, result: nextValue};
 
                     if (save) {
                         const saveMethod = save(flow);
@@ -94,8 +94,8 @@ function _guardFlow(flow) {
     if (!flow.execution)
         throw new Error("flow generator cannot be null");
 
-    if (!flow.cachedFlowCalls)
-        flow.cachedFlowCalls = [];
+    if (!flow.steps)
+        flow.steps = [];
 
     if (!flow.dependencies)
         flow.dependencies = {};

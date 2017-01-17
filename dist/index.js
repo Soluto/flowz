@@ -78,7 +78,7 @@ function executeFlow(flow, save, complete) {
                         case 4:
                             value = _guardNextValue(value);
 
-                            cachedMethod = flow.cachedFlowCalls[i];
+                            cachedMethod = flow.steps[i];
 
                             if (!cachedMethod) {
                                 _context.next = 10;
@@ -119,7 +119,7 @@ function executeFlow(flow, save, complete) {
 
                         case 22:
 
-                            flow.cachedFlowCalls[i] = { type: value.type, result: nextValue };
+                            flow.steps[i] = { type: value.type, result: nextValue };
 
                             if (!save) {
                                 _context.next = 30;
@@ -208,7 +208,7 @@ function _guardFlow(flow) {
 
     if (!flow.execution) throw new Error("flow generator cannot be null");
 
-    if (!flow.cachedFlowCalls) flow.cachedFlowCalls = [];
+    if (!flow.steps) flow.steps = [];
 
     if (!flow.dependencies) flow.dependencies = {};
 
