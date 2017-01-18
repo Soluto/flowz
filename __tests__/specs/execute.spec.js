@@ -165,27 +165,6 @@ describe("execute", () => {
       executeFlow(flow)(observer)
   })
 
-  // it("execute flow with only 'send' methods", (done) => {
-  //     const results = [];
-  //     const observer = createObserver({
-  //         next: (item) => {
-  //             results.push(item);
-  //         },
-  //         complete: () => {
-  //             expect(results[0].x).toBe(2);
-  //             done()
-  //         }
-  //     });
-  //
-  //     const flow = createFlow(function*() {
-  //         send({x: 1});
-  //         send({x: 1});
-  //         send({y: 2});
-  //     }, [{type: "output", x: 1}]);
-  //
-  //     executeFlow(flow)(observer)
-  // });
-
   it("should execute a flow with inner generator", (done) => {
       const observer = createObserver({next: (item) => {
           expect(item.result).toBe(5);

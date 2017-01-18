@@ -24,26 +24,36 @@ export function executeFlow(flow: Flow, save?: SaveFlow, complete?: CompleteFlow
 
         let stopped = false;
         let generator = flow.execution(flow.dependencies);
+
+        //set initial _send
+        if (flow.steps.length > 0) {
+            _send = (item: mixed) => {};
+        }
+        else {
+            _send = observer.next;
+        }
+
         let i = 0;
         let nextValue;
         (async function() {
             while (true) {
+                //start the execution by calling generator
+                let {done, value} = generator.next(nextValue);
+                if (done) return;
+
+                //resume execution by using cached steps
                 let cachedSteps = flow.steps[i];
                 if (cachedSteps) {
-                    _send = () => {};
                     nextValue = cachedSteps.result;
-                    let {done, value} = generator.next(nextValue);
-                    if (done) return;
                     i++;
                     continue;
                 }
 
+                //continue execution
                 _send = observer.next;
-                let {done, value} = generator.next(nextValue);
-                if (done) return;
                 value = _guardNextValue(value);
                 try {
-                    nextValue = value.func ? value.func.apply(null, value.args) : null;
+                    nextValue = value.func ? value.func.apply(null, value.args): null;
                     if (_isPromise(nextValue)) {
                         nextValue = await nextValue;
                         _send = observer.next;
