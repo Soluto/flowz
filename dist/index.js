@@ -51,121 +51,122 @@ function executeFlow(flow, save, complete) {
 
         var stopped = false;
         var generator = flow.execution(flow.dependencies);
+
+        //set initial _send
+        if (flow.steps.length > 0) {
+            _send = function _send(item) {};
+        } else {
+            _send = observer.next;
+        }
+
         var i = 0;
         var nextValue = void 0;
         (0, _asyncToGenerator3.default)(_regenerator2.default.mark(function _callee() {
-            var cachedSteps, _generator$next, _done, _value, _generator$next2, done, value, saveMethod;
+            var _generator$next, done, value, cachedSteps, saveMethod;
 
             return _regenerator2.default.wrap(function _callee$(_context) {
                 while (1) {
                     switch (_context.prev = _context.next) {
                         case 0:
                             if (!true) {
-                                _context.next = 38;
+                                _context.next = 34;
                                 break;
                             }
 
+                            //start the execution by calling generator
+                            _generator$next = generator.next(nextValue), done = _generator$next.done, value = _generator$next.value;
+
+                            if (!done) {
+                                _context.next = 4;
+                                break;
+                            }
+
+                            return _context.abrupt('return');
+
+                        case 4:
+
+                            //resume execution by using cached steps
                             cachedSteps = flow.steps[i];
 
                             if (!cachedSteps) {
-                                _context.next = 10;
+                                _context.next = 9;
                                 break;
                             }
 
-                            _send = function _send() {};
                             nextValue = cachedSteps.result;
-                            _generator$next = generator.next(nextValue), _done = _generator$next.done, _value = _generator$next.value;
-
-                            if (!_done) {
-                                _context.next = 8;
-                                break;
-                            }
-
-                            return _context.abrupt('return');
-
-                        case 8:
                             i++;
                             return _context.abrupt('continue', 0);
 
-                        case 10:
+                        case 9:
 
+                            //continue execution
                             _send = observer.next;
-                            _generator$next2 = generator.next(nextValue), done = _generator$next2.done, value = _generator$next2.value;
-
-                            if (!done) {
-                                _context.next = 14;
-                                break;
-                            }
-
-                            return _context.abrupt('return');
-
-                        case 14:
                             value = _guardNextValue(value);
-                            _context.prev = 15;
+                            _context.prev = 11;
 
                             nextValue = value.func ? value.func.apply(null, value.args) : null;
 
                             if (!_isPromise(nextValue)) {
-                                _context.next = 22;
+                                _context.next = 18;
                                 break;
                             }
 
-                            _context.next = 20;
+                            _context.next = 16;
                             return nextValue;
 
-                        case 20:
+                        case 16:
                             nextValue = _context.sent;
 
                             _send = observer.next;
 
-                        case 22:
-                            _context.next = 27;
+                        case 18:
+                            _context.next = 23;
                             break;
 
-                        case 24:
-                            _context.prev = 24;
-                            _context.t0 = _context['catch'](15);
+                        case 20:
+                            _context.prev = 20;
+                            _context.t0 = _context['catch'](11);
 
                             generator.throw(_context.t0);
 
-                        case 27:
+                        case 23:
 
                             flow.steps[i] = { type: value.type, result: nextValue };
 
                             if (!save) {
-                                _context.next = 35;
+                                _context.next = 31;
                                 break;
                             }
 
                             saveMethod = save(flow);
 
                             if (!_isPromise(saveMethod)) {
-                                _context.next = 33;
+                                _context.next = 29;
                                 break;
                             }
 
-                            _context.next = 33;
+                            _context.next = 29;
                             return saveMethod;
 
-                        case 33:
+                        case 29:
                             if (!stopped) {
-                                _context.next = 35;
+                                _context.next = 31;
                                 break;
                             }
 
                             return _context.abrupt('return');
 
-                        case 35:
+                        case 31:
                             i++;
                             _context.next = 0;
                             break;
 
-                        case 38:
+                        case 34:
                         case 'end':
                             return _context.stop();
                     }
                 }
-            }, _callee, this, [[15, 24]]);
+            }, _callee, this, [[11, 20]]);
         }))().then((0, _asyncToGenerator3.default)(_regenerator2.default.mark(function _callee2() {
             var completeMethod;
             return _regenerator2.default.wrap(function _callee2$(_context2) {
