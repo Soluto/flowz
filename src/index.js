@@ -22,42 +22,45 @@ export function executeFlow(flow: Flow, save?: SaveFlow, complete?: CompleteFlow
             return;
         }
 
-        _send = observer.next;
         let stopped = false;
         let generator = flow.execution(flow.dependencies);
         let i = 0;
         let nextValue;
         (async function() {
             while (true) {
+                let cachedSteps = flow.steps[i];
+                if (cachedSteps) {
+                    _send = () => {};
+                    nextValue = cachedSteps.result;
+                    let {done, value} = generator.next(nextValue);
+                    if (done) return;
+                    i++;
+                    continue;
+                }
+
+                _send = observer.next;
                 let {done, value} = generator.next(nextValue);
                 if (done) return;
                 value = _guardNextValue(value);
-
-                let cachedMethod = flow.steps[i];
-                if (cachedMethod) {
-                    nextValue = cachedMethod.result;
+                try {
+                    nextValue = value.func ? value.func.apply(null, value.args) : null;
+                    if (_isPromise(nextValue)) {
+                        nextValue = await nextValue;
+                        _send = observer.next;
+                    }
                 }
-                else {
-                    try {
-                        nextValue = value.func.apply(null, value.args);
-                        if (_isPromise(nextValue)) {
-                            nextValue = await nextValue;
-                            _send = observer.next;
-                        }
-                    }
-                    catch (e) {
-                        generator.throw(e);
-                    }
+                catch (e) {
+                    generator.throw(e);
+                }
 
-                    flow.steps[i] = {type: value.type, result: nextValue};
+                flow.steps[i] = {type: value.type, result: nextValue};
 
-                    if (save) {
-                        const saveMethod = save(flow);
-                        if (_isPromise(saveMethod)) {
-                            await saveMethod;
-                        }
-                        if (stopped) return;
+                if (save) {
+                    const saveMethod = save(flow);
+                    if (_isPromise(saveMethod)) {
+                        await saveMethod;
                     }
+                    if (stopped) return;
                 }
                 i++;
             }
