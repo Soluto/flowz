@@ -49,112 +49,123 @@ function executeFlow(flow, save, complete) {
             return;
         }
 
-        _send = observer.next;
         var stopped = false;
         var generator = flow.execution(flow.dependencies);
         var i = 0;
         var nextValue = void 0;
         (0, _asyncToGenerator3.default)(_regenerator2.default.mark(function _callee() {
-            var _generator$next, done, value, cachedMethod, saveMethod;
+            var cachedSteps, _generator$next, _done, _value, _generator$next2, done, value, saveMethod;
 
             return _regenerator2.default.wrap(function _callee$(_context) {
                 while (1) {
                     switch (_context.prev = _context.next) {
                         case 0:
                             if (!true) {
-                                _context.next = 33;
+                                _context.next = 38;
                                 break;
                             }
 
-                            _generator$next = generator.next(nextValue), done = _generator$next.done, value = _generator$next.value;
+                            cachedSteps = flow.steps[i];
 
-                            if (!done) {
-                                _context.next = 4;
+                            if (!cachedSteps) {
+                                _context.next = 10;
+                                break;
+                            }
+
+                            _send = function _send() {};
+                            nextValue = cachedSteps.result;
+                            _generator$next = generator.next(nextValue), _done = _generator$next.done, _value = _generator$next.value;
+
+                            if (!_done) {
+                                _context.next = 8;
                                 break;
                             }
 
                             return _context.abrupt('return');
 
-                        case 4:
-                            value = _guardNextValue(value);
-
-                            cachedMethod = flow.steps[i];
-
-                            if (!cachedMethod) {
-                                _context.next = 10;
-                                break;
-                            }
-
-                            nextValue = cachedMethod.result;
-                            _context.next = 30;
-                            break;
+                        case 8:
+                            i++;
+                            return _context.abrupt('continue', 0);
 
                         case 10:
-                            _context.prev = 10;
 
-                            nextValue = value.func.apply(null, value.args);
+                            _send = observer.next;
+                            _generator$next2 = generator.next(nextValue), done = _generator$next2.done, value = _generator$next2.value;
 
-                            if (!_isPromise(nextValue)) {
-                                _context.next = 17;
+                            if (!done) {
+                                _context.next = 14;
                                 break;
                             }
 
-                            _context.next = 15;
+                            return _context.abrupt('return');
+
+                        case 14:
+                            value = _guardNextValue(value);
+                            _context.prev = 15;
+
+                            nextValue = value.func ? value.func.apply(null, value.args) : null;
+
+                            if (!_isPromise(nextValue)) {
+                                _context.next = 22;
+                                break;
+                            }
+
+                            _context.next = 20;
                             return nextValue;
 
-                        case 15:
+                        case 20:
                             nextValue = _context.sent;
 
                             _send = observer.next;
 
-                        case 17:
-                            _context.next = 22;
+                        case 22:
+                            _context.next = 27;
                             break;
 
-                        case 19:
-                            _context.prev = 19;
-                            _context.t0 = _context['catch'](10);
+                        case 24:
+                            _context.prev = 24;
+                            _context.t0 = _context['catch'](15);
 
                             generator.throw(_context.t0);
 
-                        case 22:
+                        case 27:
 
                             flow.steps[i] = { type: value.type, result: nextValue };
 
                             if (!save) {
-                                _context.next = 30;
+                                _context.next = 35;
                                 break;
                             }
 
                             saveMethod = save(flow);
 
                             if (!_isPromise(saveMethod)) {
-                                _context.next = 28;
+                                _context.next = 33;
                                 break;
                             }
 
-                            _context.next = 28;
+                            _context.next = 33;
                             return saveMethod;
 
-                        case 28:
+                        case 33:
                             if (!stopped) {
-                                _context.next = 30;
+                                _context.next = 35;
                                 break;
                             }
 
                             return _context.abrupt('return');
 
-                        case 30:
+                        case 35:
                             i++;
                             _context.next = 0;
                             break;
 
-                        case 33:
+                        case 38:
                         case 'end':
                             return _context.stop();
                     }
                 }
-            }, _callee, this, [[10, 19]]);
+            }, _callee, this, [[15, 24]]);
         }))().then((0, _asyncToGenerator3.default)(_regenerator2.default.mark(function _callee2() {
             var completeMethod;
             return _regenerator2.default.wrap(function _callee2$(_context2) {

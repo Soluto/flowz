@@ -1,11 +1,11 @@
 {
   "name": "@npmsoluto/stateflows",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "",
   "main": "dist/index.js",
   "scripts": {
     "test": "jest",
-    "build": "babel src --out-dir dist --source-maps"
+    "prepublish": "babel src --out-dir dist --source-maps"
   },
   "repository": {
     "type": "git",
