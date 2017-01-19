@@ -1,13 +1,13 @@
-# Stateflows
-Stateflows is a library for writing resumable asynchronous code.
+# Flowz
+Flowz is a library for writing resumable asynchronous code.
 
-Stateflows saves the state of the execution internally and when it is resumed it plays back the execution until the last call that was made without actually running the side effects again.
+Flowz saves the state of the execution internally and when it is resumed it plays back the execution until the last call that was made without actually running the side effects again.
 
 For instance, if during an execution a call was made to an http server it will not run again when the execution is resumed - the result from the original call will be used.
 
 ## Install
 ```sh
-$ npm install stateflows --save
+$ npm install flowz --save
 ```
 
 ## Usage
