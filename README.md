@@ -14,7 +14,7 @@ $ npm install flowz --save
 Comming soon
 
 ## Contributing
-Thanks for thinking about contributing! We are looking for contributions of any sort and size - features, bug fixes, documentation or anything else that you think will make shisell better.
+Thanks for thinking about contributing! We are looking for contributions of any sort and size - features, bug fixes, documentation or anything else that you think will make tye library better.
 * Fork and clone locally
 * Create a topic specific branch
 * Add a cool feature or fix a bug
