@@ -1,14 +1,14 @@
 //@flow
-import type {Flow, Observer, SaveFlow, CompleteFlow} from './types';
+import type {Flow, Observer, SaveFlow, CompleteFlow } from './types';
 
 //usage of static 'send' method for better client api'
-let _send = (item: mixed) => {};
+let _send = (item: mixed) => { };
 export const send = (item: mixed) => _send(item);
 
 export const call = require('./call').default;
 
 export function executeFlow(flow: Flow, save?: SaveFlow, complete?: CompleteFlow) {
-    return function(observer: Observer) {
+    return function (observer: Observer) {
         try {
             flow = _guardFlow(flow);
             Object.keys(flow.dependencies).forEach(k => {
@@ -27,7 +27,7 @@ export function executeFlow(flow: Flow, save?: SaveFlow, complete?: CompleteFlow
 
         //set initial _send
         if (flow.steps.length > 0) {
-            _send = (item: mixed) => {};
+            _send = (item: mixed) => { };
         }
         else {
             _send = observer.next;
@@ -35,25 +35,55 @@ export function executeFlow(flow: Flow, save?: SaveFlow, complete?: CompleteFlow
 
         let i = 0;
         let nextValue;
-        (async function() {
+        (async function () {
             while (true) {
-                //start the execution by calling generator
-                let {done, value} = generator.next(nextValue);
-                if (done) return;
-
                 //resume execution by using cached steps
-                let cachedSteps = flow.steps[i];
-                if (cachedSteps) {
-                    nextValue = cachedSteps.result;
+                //exepecting 'message' type in the cache is for backwards compatability and will be removed in the next major version
+                const cachedStep = flow.steps[i];
+                const nextCachedStep = flow.steps[i + 1];
+                if (!cachedStep) {
+                    //cache resolving is done
+                }
+                else if (cachedStep.type === "call" && !nextCachedStep) {
+                    nextValue = cachedStep.result;
+                    _send = observer.next;                    
+                    generator.next(nextValue);
+                    i++;
+                    continue;
+                }
+                else if (cachedStep.type === "call" && nextCachedStep.type === "call") {
+                    nextValue = cachedStep.result;
+                    generator.next(nextValue);
+                    i++;
+                    continue;
+                }
+                else if (cachedStep.type === "call" && nextCachedStep.type === "message") {
+                    nextValue = cachedStep.result;
+                    i++;
+                    continue;
+                }            
+                else if (cachedStep.type === "message" && !nextCachedStep) {                    
+                    generator.next(nextValue);
+                    i++;
+                    continue;
+                }                  
+                else if (cachedStep.type === "message" && nextCachedStep.type === "message") {
+                    i++;
+                    continue;
+                }
+                else if (cachedStep.type === "message" && nextCachedStep.type === "call") {
+                    generator.next(nextValue);
                     i++;
                     continue;
                 }
 
-                //continue execution
+                //continue execution when cache resolving is completed
+                let {done, value} = generator.next(nextValue);
+                if (done) return;
                 _send = observer.next;
                 value = _guardNextValue(value);
                 try {
-                    nextValue = value.func ? value.func.apply(null, value.args): null;
+                    nextValue = value.func ? value.func.apply(null, value.args) : null;
                     if (_isPromise(nextValue)) {
                         nextValue = await nextValue;
                         _send = observer.next;
@@ -63,7 +93,7 @@ export function executeFlow(flow: Flow, save?: SaveFlow, complete?: CompleteFlow
                     generator.throw(e);
                 }
 
-                flow.steps[i] = {type: value.type, result: nextValue};
+                flow.steps[i] = { type: value.type, result: nextValue };
 
                 if (save) {
                     const saveMethod = save(flow);
@@ -75,20 +105,20 @@ export function executeFlow(flow: Flow, save?: SaveFlow, complete?: CompleteFlow
                 i++;
             }
         })()
-        .then(async () => {
-            if (complete) {
-                const completeMethod = complete(flow);
-                if (_isPromise(completeMethod)) {
-                    await completeMethod;
+            .then(async () => {
+                if (complete) {
+                    const completeMethod = complete(flow);
+                    if (_isPromise(completeMethod)) {
+                        await completeMethod;
+                    }
                 }
-            }
-            observer.complete()
-        })
-        .catch(error => observer.error(error));
+                observer.complete()
+            })
+            .catch(error => observer.error(error));
 
         return {
             ...flow,
-            dispose: () => {stopped = true;}
+            dispose: () => { stopped = true; }
         }
     }
 }
@@ -127,6 +157,6 @@ function _guardNextValue(value) {
     return value;
 }
 
-const _isFunction = function(obj) {
+const _isFunction = function (obj) {
     return !!(obj && obj.constructor && obj.call && obj.apply);
 };
