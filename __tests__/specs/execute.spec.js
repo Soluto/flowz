@@ -173,24 +173,6 @@ describe("execute", () => {
         executeFlow(flow)(observer)
     });
 
-    it("should not 'send' items on flow resume", (done) => {
-        const observer = createObserver({
-            next: (item) => {
-                expect(item.result).toBe("cachedResult1_exepcted2")
-                done();
-            }
-        })
-
-        const flow = createFlow(function* () {
-            send("value that was already sent and should not be sent agains");
-            const result1 = yield call(() => "exepcted1")();
-            const result2 = yield call(() => "exepcted2")();
-            send({ result: result1 + "_" + result2 });
-        }, [{ type: "call", result: "cachedResult1" }]);
-
-        executeFlow(flow)(observer)
-    })
-
     it("should execute a flow with inner generator", (done) => {
         const observer = createObserver({
             next: (item) => {
@@ -291,32 +273,32 @@ describe("execute", () => {
         expect(await results1).toEqual(["exepcted1", "exepcted3"]);
         expect(await results2).toEqual(["exepcted2"])
     });
-})
 
-describe("backwards compatibility", () => {
-    it("should execute flow with cached steps", (done) => {
-        const observer = createObserver({
-            next: (item) => {
-                expect(item.result).toBe("success")
-                done();
-            }
-        })
+    it("should stop flow execution", async () => {
+        const observer = createObserver();
 
         const flow = createFlow(function* () {
             yield call(() => 1)();
             yield call(() => 2)();
-            send({ foo: "bar" });
             yield call(() => 3)();
-            yield call(() => 4)();
-            send({ result: "success" });
+        });
 
-        }, [
-                { type: "call", result: 1 },
-                { type: "call", result: 2 },
-                { type: "message", message: { foo: "bar" } },
-                { type: "call", result: 4 }
-            ]);
+        const flowInProgress = executeFlow(flow)(observer);
+        flowInProgress.dispose();
+        expect(flowInProgress.steps.map(c => c.result)).toEqual([1, 2, 3]);
+    });
 
-        executeFlow(flow)(observer)
+    it("should stop flow execution when yielding asynchronous call", async () => {
+        const observer = createObserver();
+
+        const flow = createFlow(function* () {
+            yield call(() => 1)();
+            yield call(() => Promise.resolve())();
+            yield call(() => 3)();
+        });
+
+        const flowInProgress = executeFlow(flow)(observer);
+        flowInProgress.dispose();
+        expect(flowInProgress.steps.map(c => c.result)).toEqual([1]);
     });
 })
