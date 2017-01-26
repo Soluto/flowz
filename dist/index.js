@@ -33,10 +33,8 @@ var send = exports.send = function send(item) {
 
 var call = exports.call = require('./call').default;
 
-function executeFlow(flow, save, complete) {
+function executeFlow(flow) {
     return function (observer) {
-        var _this = this;
-
         try {
             flow = _guardFlow(flow);
             (0, _keys2.default)(flow.dependencies).forEach(function (k) {
@@ -52,213 +50,101 @@ function executeFlow(flow, save, complete) {
         var stopped = false;
         var generator = flow.execution(flow.dependencies);
 
-        //set initial _send
-        if (flow.steps.length > 0) {
-            _send = function _send(item) {};
-        } else {
-            _send = observer.next;
-        }
-
+        _send = observer.next;
         var i = 0;
         var nextValue = void 0;
         (0, _asyncToGenerator3.default)(_regenerator2.default.mark(function _callee() {
-            var cachedStep, nextCachedStep, _generator$next, done, value, saveMethod;
+            var _generator$next, done, value, cachedSteps;
 
             return _regenerator2.default.wrap(function _callee$(_context) {
                 while (1) {
                     switch (_context.prev = _context.next) {
                         case 0:
                             if (!true) {
-                                _context.next = 70;
+                                _context.next = 28;
                                 break;
                             }
 
-                            //resume execution by using cached steps
-                            //exepecting 'message' type in the cache is for backwards compatability and will be removed in the next major version
-                            cachedStep = flow.steps[i];
-                            nextCachedStep = flow.steps[i + 1];
-
-                            if (cachedStep) {
-                                _context.next = 6;
-                                break;
-                            }
-
-                            _context.next = 42;
-                            break;
-
-                        case 6:
-                            if (!(cachedStep.type === "call" && !nextCachedStep)) {
-                                _context.next = 14;
-                                break;
-                            }
-
-                            nextValue = cachedStep.result;
-                            _send = observer.next;
-                            generator.next(nextValue);
-                            i++;
-                            return _context.abrupt('continue', 0);
-
-                        case 14:
-                            if (!(cachedStep.type === "call" && nextCachedStep.type === "call")) {
-                                _context.next = 21;
-                                break;
-                            }
-
-                            nextValue = cachedStep.result;
-                            generator.next(nextValue);
-                            i++;
-                            return _context.abrupt('continue', 0);
-
-                        case 21:
-                            if (!(cachedStep.type === "call" && nextCachedStep.type === "message")) {
-                                _context.next = 27;
-                                break;
-                            }
-
-                            nextValue = cachedStep.result;
-                            i++;
-                            return _context.abrupt('continue', 0);
-
-                        case 27:
-                            if (!(cachedStep.type === "message" && !nextCachedStep)) {
-                                _context.next = 33;
-                                break;
-                            }
-
-                            generator.next(nextValue);
-                            i++;
-                            return _context.abrupt('continue', 0);
-
-                        case 33:
-                            if (!(cachedStep.type === "message" && nextCachedStep.type === "message")) {
-                                _context.next = 38;
-                                break;
-                            }
-
-                            i++;
-                            return _context.abrupt('continue', 0);
-
-                        case 38:
-                            if (!(cachedStep.type === "message" && nextCachedStep.type === "call")) {
-                                _context.next = 42;
-                                break;
-                            }
-
-                            generator.next(nextValue);
-                            i++;
-                            return _context.abrupt('continue', 0);
-
-                        case 42:
-
-                            //continue execution when cache resolving is completed
+                            //start the execution by calling generator
                             _generator$next = generator.next(nextValue), done = _generator$next.done, value = _generator$next.value;
 
                             if (!done) {
-                                _context.next = 45;
+                                _context.next = 4;
                                 break;
                             }
 
                             return _context.abrupt('return');
 
-                        case 45:
-                            _send = observer.next;
+                        case 4:
+
+                            //resume execution by using cached steps
+                            cachedSteps = flow.steps[i];
+
+                            if (!cachedSteps) {
+                                _context.next = 9;
+                                break;
+                            }
+
+                            nextValue = cachedSteps.result;
+                            i++;
+                            return _context.abrupt('continue', 0);
+
+                        case 9:
+
+                            //continue execution
                             value = _guardNextValue(value);
-                            _context.prev = 47;
+                            _context.prev = 10;
 
                             nextValue = value.func ? value.func.apply(null, value.args) : null;
 
                             if (!_isPromise(nextValue)) {
-                                _context.next = 54;
+                                _context.next = 17;
                                 break;
                             }
 
-                            _context.next = 52;
+                            _context.next = 15;
                             return nextValue;
 
-                        case 52:
+                        case 15:
                             nextValue = _context.sent;
 
                             _send = observer.next;
 
-                        case 54:
-                            _context.next = 59;
+                        case 17:
+                            _context.next = 22;
                             break;
 
-                        case 56:
-                            _context.prev = 56;
-                            _context.t0 = _context['catch'](47);
+                        case 19:
+                            _context.prev = 19;
+                            _context.t0 = _context['catch'](10);
 
                             generator.throw(_context.t0);
 
-                        case 59:
+                        case 22:
 
                             flow.steps[i] = { type: value.type, result: nextValue };
 
-                            if (!save) {
-                                _context.next = 67;
-                                break;
-                            }
-
-                            saveMethod = save(flow);
-
-                            if (!_isPromise(saveMethod)) {
-                                _context.next = 65;
-                                break;
-                            }
-
-                            _context.next = 65;
-                            return saveMethod;
-
-                        case 65:
                             if (!stopped) {
-                                _context.next = 67;
+                                _context.next = 25;
                                 break;
                             }
 
                             return _context.abrupt('return');
 
-                        case 67:
+                        case 25:
                             i++;
                             _context.next = 0;
                             break;
 
-                        case 70:
+                        case 28:
                         case 'end':
                             return _context.stop();
                     }
                 }
-            }, _callee, this, [[47, 56]]);
-        }))().then((0, _asyncToGenerator3.default)(_regenerator2.default.mark(function _callee2() {
-            var completeMethod;
-            return _regenerator2.default.wrap(function _callee2$(_context2) {
-                while (1) {
-                    switch (_context2.prev = _context2.next) {
-                        case 0:
-                            if (!complete) {
-                                _context2.next = 5;
-                                break;
-                            }
-
-                            completeMethod = complete(flow);
-
-                            if (!_isPromise(completeMethod)) {
-                                _context2.next = 5;
-                                break;
-                            }
-
-                            _context2.next = 5;
-                            return completeMethod;
-
-                        case 5:
-                            observer.complete();
-
-                        case 6:
-                        case 'end':
-                            return _context2.stop();
-                    }
-                }
-            }, _callee2, _this);
-        }))).catch(function (error) {
+            }, _callee, this, [[10, 19]]);
+        }))().then(function () {
+            return observer.complete();
+        }).catch(function (error) {
             return observer.error(error);
         });
 
