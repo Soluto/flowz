@@ -1,5 +1,5 @@
 {
-  "name": "@npmsoluto/stateflows",
+  "name": "flowz",
   "version": "0.0.12",
   "description": "",
   "main": "dist/index.js",
