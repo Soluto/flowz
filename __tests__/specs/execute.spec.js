@@ -14,7 +14,7 @@ describe("execute", () => {
             const result = [];
             observer = createObserver({
                 next: (item) => {
-                    result.push(item);
+                    result.push(item.payload);
                 },
                 complete: () => resolve(result)
             });
@@ -32,7 +32,7 @@ describe("execute", () => {
     it("should executes flow 'call' without params", (done) => {
         const observer = createObserver({
             next: (item) => {
-                expect(item.result).toBe("exepcted1")
+                expect(item.payload.result).toBe("exepcted1")
                 done();
             }
         })
@@ -50,7 +50,7 @@ describe("execute", () => {
 
         const observer = createObserver({
             next: (item) => {
-                expect(item.result).toBe("exepcted1")
+                expect(item.payload.result).toBe("exepcted1")
                 done();
             }
         })
@@ -66,7 +66,7 @@ describe("execute", () => {
     it("should executes flow 'call' with closure params", (done) => {
         const observer = createObserver({
             next: (item) => {
-                expect(item.result).toBe(5)
+                expect(item.payload.result).toBe(5)
                 done();
             }
         })
@@ -83,8 +83,8 @@ describe("execute", () => {
     it("should wrap object functions with 'call'", (done) => {
         const observer = createObserver({
             next: (item) => {
-                expect(item.result1).toBe(5)
-                expect(item.result2).toBe(6)
+                expect(item.payload.result1).toBe(5)
+                expect(item.payload.result2).toBe(6)
                 done();
             }
         })
@@ -110,7 +110,7 @@ describe("execute", () => {
     it("should executes async flow 'call'", (done) => {
         const observer = createObserver({
             next: (item) => {
-                expect(item.result).toBe(5)
+                expect(item.payload.result).toBe(5)
                 done();
             }
         })
@@ -126,7 +126,7 @@ describe("execute", () => {
     it("should use result from flow 'call'", (done) => {
         const observer = createObserver({
             next: (item) => {
-                expect(item.result).toBe("exepcted1_exepcted2")
+                expect(item.payload.result).toBe("exepcted1_exepcted2")
                 done();
             }
         })
@@ -143,7 +143,7 @@ describe("execute", () => {
     it("should execute flow with single cached step", (done) => {
         const observer = createObserver({
             next: (item) => {
-                expect(item.result).toBe("cachedResult1")
+                expect(item.payload.result).toBe("cachedResult1")
                 done();
             }
         })
@@ -159,7 +159,7 @@ describe("execute", () => {
     it("should execute flow with multiple cached steps", (done) => {
         const observer = createObserver({
             next: (item) => {
-                expect(item.result).toBe("cachedResult1_exepcted2")
+                expect(item.payload.result).toBe("cachedResult1_exepcted2")
                 done();
             }
         })
@@ -176,7 +176,7 @@ describe("execute", () => {
     it("should execute a flow with inner generator", (done) => {
         const observer = createObserver({
             next: (item) => {
-                expect(item.result).toBe(5);
+                expect(item.payload.result).toBe(5);
                 done();
             }
         });
@@ -230,6 +230,23 @@ describe("execute", () => {
         executeFlow(flow)(observer)
     });
 
+    it("should specify items from flow resume", (done) => {
+        const observer = createObserver({
+            next: (item) => {
+                expect(item.payload.result).toBe("cachedResult1")
+                expect(item.meta.isResume).toBe(true);          
+                done();
+            }
+        })
+
+        const flow = createFlow(function* () {
+            const result1 = yield call(() => "exepcted1")();
+            send({ result: result1 });
+        }, [{ type: "call", result: "cachedResult1" }]);
+
+        executeFlow(flow)(observer)
+    }); 
+
     it("should execute two flows parallely", async () => {
         const flow1 = createFlow(function* () {
             send({ result: "exepcted1" });
@@ -241,7 +258,7 @@ describe("execute", () => {
             let results = [];
             observer1 = createObserver({
                 next: (item) => {
-                    results.push(item.result);
+                    results.push(item.payload.result);
                 },
                 complete: () => {
                     resolve(results);
@@ -258,7 +275,7 @@ describe("execute", () => {
             const results = [];
             observer2 = createObserver({
                 next: (item) => {
-                    results.push(item.result);
+                    results.push(item.payload.result);
                 },
                 complete: () => {
                     resolve(results);

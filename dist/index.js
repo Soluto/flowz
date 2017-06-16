@@ -50,9 +50,11 @@ function executeFlow(flow) {
         var stopped = false;
         var generator = flow.execution(flow.dependencies);
 
-        _send = observer.next;
         var i = 0;
         var nextValue = void 0;
+        _send = function _send(item) {
+            return observer.next({ payload: item, meta: {} });
+        };
         (0, _asyncToGenerator3.default)(_regenerator2.default.mark(function _callee() {
             var _generator$next, done, value, cachedSteps;
 
@@ -61,7 +63,7 @@ function executeFlow(flow) {
                     switch (_context.prev = _context.next) {
                         case 0:
                             if (!true) {
-                                _context.next = 28;
+                                _context.next = 30;
                                 break;
                             }
 
@@ -81,67 +83,75 @@ function executeFlow(flow) {
                             cachedSteps = flow.steps[i];
 
                             if (!cachedSteps) {
-                                _context.next = 9;
+                                _context.next = 10;
                                 break;
                             }
 
+                            _send = function _send(item) {
+                                return observer.next({ payload: item, meta: { isResume: true } });
+                            };
                             nextValue = cachedSteps.result;
                             i++;
                             return _context.abrupt('continue', 0);
 
-                        case 9:
+                        case 10:
 
                             //continue execution
+                            _send = function _send(item) {
+                                return observer.next({ payload: item, meta: {} });
+                            };
                             value = _guardNextValue(value);
-                            _context.prev = 10;
+                            _context.prev = 12;
 
                             nextValue = value.func ? value.func.apply(null, value.args) : null;
 
                             if (!_isPromise(nextValue)) {
-                                _context.next = 17;
+                                _context.next = 19;
                                 break;
                             }
 
-                            _context.next = 15;
+                            _context.next = 17;
                             return nextValue;
 
-                        case 15:
+                        case 17:
                             nextValue = _context.sent;
 
-                            _send = observer.next;
-
-                        case 17:
-                            _context.next = 22;
-                            break;
+                            _send = function _send(item) {
+                                return observer.next({ payload: item });
+                            };
 
                         case 19:
-                            _context.prev = 19;
-                            _context.t0 = _context['catch'](10);
+                            _context.next = 24;
+                            break;
+
+                        case 21:
+                            _context.prev = 21;
+                            _context.t0 = _context['catch'](12);
 
                             generator.throw(_context.t0);
 
-                        case 22:
+                        case 24:
 
                             flow.steps[i] = { type: value.type, result: nextValue };
 
                             if (!stopped) {
-                                _context.next = 25;
+                                _context.next = 27;
                                 break;
                             }
 
                             return _context.abrupt('return');
 
-                        case 25:
+                        case 27:
                             i++;
                             _context.next = 0;
                             break;
 
-                        case 28:
+                        case 30:
                         case 'end':
                             return _context.stop();
                     }
                 }
-            }, _callee, this, [[10, 19]]);
+            }, _callee, this, [[12, 21]]);
         }))().then(function () {
             return observer.complete();
         }).catch(function (error) {

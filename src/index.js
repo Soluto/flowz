@@ -25,9 +25,9 @@ export function executeFlow(flow: Flow) {
         let stopped = false;
         let generator = flow.execution(flow.dependencies);
 
-        _send = observer.next;
         let i = 0;
         let nextValue;
+        _send = item => observer.next({payload: item, meta: {}});
         (async function() {
             while (true) {
                 //start the execution by calling generator
@@ -37,18 +37,20 @@ export function executeFlow(flow: Flow) {
                 //resume execution by using cached steps
                 let cachedSteps = flow.steps[i];
                 if (cachedSteps) {
+                    _send = item => observer.next({payload: item, meta: {isResume: true}});
                     nextValue = cachedSteps.result;
                     i++;
                     continue;
                 }
 
                 //continue execution
+                _send = item => observer.next({payload: item, meta: {}});                
                 value = _guardNextValue(value);
                 try {
                     nextValue = value.func ? value.func.apply(null, value.args): null;
                     if (_isPromise(nextValue)) {
                         nextValue = await nextValue;
-                        _send = observer.next;
+                        _send = item => observer.next({payload: item});
                     }
                 }
                 catch (e) {

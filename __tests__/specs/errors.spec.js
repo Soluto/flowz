@@ -6,7 +6,7 @@ describe("errors", () => {
       let observer;
       const assertion = new Promise((resolve) => {
           observer = createObserver({next: (item) => {
-              resolve(item)
+              resolve(item.payload)
           }});
       });
 
@@ -28,7 +28,7 @@ describe("errors", () => {
       let observer;
       const assertion = new Promise((resolve) => {
           observer = createObserver({next: (item) => {
-              resolve(item)
+              resolve(item.payload)
           }});
       });
 

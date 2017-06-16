@@ -1,11 +1,12 @@
 {
   "name": "flowz",
-  "version": "0.0.12",
+  "version": "0.1.1",
   "description": "",
   "main": "dist/index.js",
   "scripts": {
     "test": "jest",
-    "prepublish": "babel src --out-dir dist --source-maps"
+    "build": "babel src --out-dir dist --source-maps",    
+    "prepublish": "jest && babel src --out-dir dist --source-maps"
   },
   "repository": {
     "type": "git",
